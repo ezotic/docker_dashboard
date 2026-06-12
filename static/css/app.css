@@ -41,6 +41,7 @@
 .topbar {
   background-color: #161b22;
   min-height: 54px;
+  overflow: hidden;
 }
 
 /* Status dot */
@@ -99,6 +100,12 @@
 
 /* Mobile touch targets */
 @media (max-width: 767.98px) {
+  /* Nav links: enlarge vertical tap area to ~44 px */
+  .sidebar .nav-link {
+    padding: 0.75rem 0.75rem;
+    font-size: 1rem;
+  }
+
   .btn-group-sm .btn {
     padding: 0.4rem 0.6rem;
     min-width: 36px;
@@ -107,5 +114,15 @@
   /* Tighten table cell padding on small screens */
   .table td, .table th {
     padding: 0.5rem 0.5rem;
+  }
+
+  /* Ensure dropdown items are easy to tap */
+  .dropdown-item {
+    padding: 0.55rem 1rem;
+  }
+
+  /* Prevent long monospace strings from blowing out table width */
+  .table .font-monospace {
+    word-break: break-all;
   }
 }

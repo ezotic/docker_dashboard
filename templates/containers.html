@@ -55,7 +55,8 @@
           <span id="mem-{{ c.short_id }}" class="small">—</span>
         </td>
         <td class="text-end">
-          <div class="btn-group btn-group-sm">
+          <!-- sm+: icon button group -->
+          <div class="btn-group btn-group-sm d-none d-sm-flex">
             <button class="btn btn-outline-success" data-action="start" data-id="{{ c.id }}"
               title="Start" {% if c.status == 'running' %}disabled{% endif %}>
               <i class="bi bi-play-fill"></i>
@@ -64,7 +65,7 @@
               title="Stop" {% if c.status != 'running' %}disabled{% endif %}>
               <i class="bi bi-stop-fill"></i>
             </button>
-            <button class="btn btn-outline-info d-none d-sm-inline-flex" data-action="restart" data-id="{{ c.id }}"
+            <button class="btn btn-outline-info" data-action="restart" data-id="{{ c.id }}"
               title="Restart" {% if c.status != 'running' %}disabled{% endif %}>
               <i class="bi bi-arrow-clockwise"></i>
             </button>
@@ -72,6 +73,40 @@
               data-name="{{ c.name }}" title="Remove">
               <i class="bi bi-trash3"></i>
             </button>
+          </div>
+          <!-- xs: action dropdown -->
+          <div class="dropdown d-sm-none">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+              <li>
+                <button class="dropdown-item" data-action="start" data-id="{{ c.id }}"
+                  {% if c.status == 'running' %}disabled{% endif %}>
+                  <i class="bi bi-play-fill text-success me-2"></i>Start
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" data-action="stop" data-id="{{ c.id }}"
+                  {% if c.status != 'running' %}disabled{% endif %}>
+                  <i class="bi bi-stop-fill text-warning me-2"></i>Stop
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" data-action="restart" data-id="{{ c.id }}"
+                  {% if c.status != 'running' %}disabled{% endif %}>
+                  <i class="bi bi-arrow-clockwise text-info me-2"></i>Restart
+                </button>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button class="dropdown-item text-danger" data-action="remove"
+                  data-id="{{ c.id }}" data-name="{{ c.name }}">
+                  <i class="bi bi-trash3 me-2"></i>Remove
+                </button>
+              </li>
+            </ul>
           </div>
         </td>
       </tr>

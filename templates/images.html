@@ -21,7 +21,7 @@
       {% for img in images %}
       {% for tag in img.tags %}
       <tr>
-        <td class="font-monospace small">{{ tag }}</td>
+        <td class="font-monospace small text-break">{{ tag }}</td>
         <td class="font-monospace small text-muted d-none d-md-table-cell">{{ img.short_id }}</td>
         <td class="small">{{ img.size }}</td>
         <td class="small text-muted d-none d-sm-table-cell">{{ img.created }}</td>

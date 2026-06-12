@@ -34,32 +34,27 @@
 
     <ul class="nav nav-pills flex-column mb-auto gap-1">
       <li class="nav-item">
-        <a href="/" class="nav-link text-light {% if request.path == '/' %}active{% endif %}"
-           data-bs-dismiss="offcanvas">
+        <a href="/" class="nav-link text-light {% if request.path == '/' %}active{% endif %}">
           <i class="bi bi-speedometer2 me-2"></i>Dashboard
         </a>
       </li>
       <li class="nav-item">
-        <a href="/containers" class="nav-link text-light {% if request.path.startswith('/containers') %}active{% endif %}"
-           data-bs-dismiss="offcanvas">
+        <a href="/containers" class="nav-link text-light {% if request.path.startswith('/containers') %}active{% endif %}">
           <i class="bi bi-box-seam me-2"></i>Containers
         </a>
       </li>
       <li class="nav-item">
-        <a href="/images" class="nav-link text-light {% if request.path == '/images' %}active{% endif %}"
-           data-bs-dismiss="offcanvas">
+        <a href="/images" class="nav-link text-light {% if request.path == '/images' %}active{% endif %}">
           <i class="bi bi-layers me-2"></i>Images
         </a>
       </li>
       <li class="nav-item">
-        <a href="/volumes" class="nav-link text-light {% if request.path == '/volumes' %}active{% endif %}"
-           data-bs-dismiss="offcanvas">
+        <a href="/volumes" class="nav-link text-light {% if request.path == '/volumes' %}active{% endif %}">
           <i class="bi bi-database me-2"></i>Volumes
         </a>
       </li>
       <li class="nav-item">
-        <a href="/networks" class="nav-link text-light {% if request.path == '/networks' %}active{% endif %}"
-           data-bs-dismiss="offcanvas">
+        <a href="/networks" class="nav-link text-light {% if request.path == '/networks' %}active{% endif %}">
           <i class="bi bi-diagram-3 me-2"></i>Networks
         </a>
       </li>

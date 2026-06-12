@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Logs — {{ container_name }}{% endblock %}
 {% block header %}
-  <a href="/containers" class="text-muted text-decoration-none me-2"><i class="bi bi-arrow-left"></i></a>
-  Logs — <span class="text-info font-monospace">{{ container_name }}</span>
+  <a href="/containers" class="text-muted text-decoration-none me-2 flex-shrink-0"><i class="bi bi-arrow-left"></i></a>
+  <span class="text-truncate">Logs — <span class="text-info font-monospace">{{ container_name }}</span></span>
 {% endblock %}
 
 {% block content %}
