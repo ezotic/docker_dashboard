@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Logs — {{ container_name }}{% endblock %}
+{% block header %}
+  <a href="/containers" class="text-muted text-decoration-none me-2"><i class="bi bi-arrow-left"></i></a>
+  Logs — <span class="text-info font-monospace">{{ container_name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex gap-2">
+    <button id="btn-pause" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-pause-fill"></i> Pause scroll
+    </button>
+    <button id="btn-clear" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-x-circle"></i> Clear
+    </button>
+  </div>
+  <span id="stream-status" class="badge bg-success">Live</span>
+</div>
+
+<div id="log-box"
+  data-container-id="{{ container_id }}"
+  class="log-terminal p-3 rounded overflow-auto font-monospace small"
+  style="height: calc(100vh - 220px);">
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/logs.js"></script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Docker{% endblock %}
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+{% if not connected %}
+<div class="alert alert-danger">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+  Cannot connect to Docker daemon.
+  {% if stats.error %}<code class="ms-2">{{ stats.error }}</code>{% endif %}
+</div>
+{% else %}
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="card bg-secondary-subtle border-0 h-100">
+      <div class="card-body text-center">
+        <div class="fs-1 fw-bold text-success" id="stat-running">{{ stats.running }}</div>
+        <div class="text-muted small">Running</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="card bg-secondary-subtle border-0 h-100">
+      <div class="card-body text-center">
+        <div class="fs-1 fw-bold text-secondary" id="stat-stopped">{{ stats.stopped }}</div>
+        <div class="text-muted small">Stopped</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="card bg-secondary-subtle border-0 h-100">
+      <div class="card-body text-center">
+        <div class="fs-1 fw-bold text-light" id="stat-total">{{ stats.total }}</div>
+        <div class="text-muted small">Total Containers</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="card bg-secondary-subtle border-0 h-100">
+      <div class="card-body text-center">
+        <div class="fs-1 fw-bold text-info" id="stat-images">{{ stats.images }}</div>
+        <div class="text-muted small">Images</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="card bg-secondary-subtle border-0 h-100">
+      <div class="card-body text-center">
+        <div class="fs-1 fw-bold text-warning" id="stat-volumes">{{ stats.volumes }}</div>
+        <div class="text-muted small">Volumes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Disk usage -->
+<h6 class="text-muted mb-3">Disk Usage</h6>
+<div class="row g-3">
+  {% set disk_items = [
+    ("Images", stats.disk.images, "bi-layers", "info"),
+    ("Containers", stats.disk.containers, "bi-box-seam", "success"),
+    ("Volumes", stats.disk.volumes, "bi-database", "warning"),
+    ("Build Cache", stats.disk.build_cache, "bi-hammer", "secondary"),
+  ] %}
+  {% for label, value, icon, color in disk_items %}
+  <div class="col-6 col-md-3">
+    <div class="card bg-secondary-subtle border-0">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi {{ icon }} text-{{ color }} fs-3"></i>
+        <div>
+          <div class="fw-semibold disk-val" data-key="{{ label.lower().replace(' ', '_') }}">{{ value }}</div>
+          <div class="text-muted small">{{ label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Volumes — Docker{% endblock %}
+{% block header %}Volumes{% endblock %}
+
+{% block content %}
+{% if not connected %}
+<div class="alert alert-danger">Cannot connect to Docker daemon.</div>
+{% else %}
+<div class="table-responsive">
+  <table class="table table-dark table-hover align-middle">
+    <thead class="text-muted small">
+      <tr>
+        <th>Name</th>
+        <th>Driver</th>
+        <th>Mountpoint</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in volumes %}
+      <tr>
+        <td class="font-monospace small">{{ v.name }}</td>
+        <td class="small text-muted">{{ v.driver }}</td>
+        <td class="small text-muted font-monospace" style="word-break:break-all;">{{ v.mountpoint }}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-danger remove-vol-btn"
+            data-name="{{ v.name }}" title="Remove">
+            <i class="bi bi-trash3"></i>
+          </button>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-center text-muted py-5">No volumes found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Confirm remove modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title">Remove Volume</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">Remove volume <strong id="confirm-name" class="font-monospace"></strong>?</div>
+      <div class="modal-footer border-secondary">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger" id="confirm-btn">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/volumes.js"></script>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Images — Docker{% endblock %}
+{% block header %}Images{% endblock %}
+
+{% block content %}
+{% if not connected %}
+<div class="alert alert-danger">Cannot connect to Docker daemon.</div>
+{% else %}
+<div class="table-responsive">
+  <table class="table table-dark table-hover align-middle">
+    <thead class="text-muted small">
+      <tr>
+        <th>Name : Tag</th>
+        <th>Image ID</th>
+        <th>Size</th>
+        <th>Created</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for img in images %}
+      {% for tag in img.tags %}
+      <tr>
+        <td class="font-monospace small">{{ tag }}</td>
+        <td class="font-monospace small text-muted">{{ img.short_id }}</td>
+        <td class="small">{{ img.size }}</td>
+        <td class="small text-muted">{{ img.created }}</td>
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary inspect-btn"
+              data-id="{{ img.id }}" data-tag="{{ tag }}" title="Inspect">
+              <i class="bi bi-info-circle"></i>
+            </button>
+            <button class="btn btn-outline-danger remove-img-btn"
+              data-id="{{ img.id }}" data-tag="{{ tag }}" title="Remove">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr><td colspan="5" class="text-center text-muted py-5">No images found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Inspect modal -->
+<div class="modal fade" id="inspectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark border border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title">Inspect: <span id="inspect-tag" class="font-monospace text-info"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <pre id="inspect-body" class="m-0 p-3 small text-success overflow-auto" style="max-height: 60vh;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm remove modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title">Remove Image</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">Remove <strong id="confirm-tag" class="font-monospace"></strong>?</div>
+      <div class="modal-footer border-secondary">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger" id="confirm-btn">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/images.js"></script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Networks — Docker{% endblock %}
+{% block header %}Networks{% endblock %}
+
+{% block content %}
+{% if not connected %}
+<div class="alert alert-danger">Cannot connect to Docker daemon.</div>
+{% else %}
+<div class="table-responsive">
+  <table class="table table-dark table-hover align-middle">
+    <thead class="text-muted small">
+      <tr>
+        <th>Name</th>
+        <th>Driver</th>
+        <th>Scope</th>
+        <th>Network ID</th>
+        <th>Subnet</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for n in networks %}
+      <tr>
+        <td class="fw-semibold">{{ n.name }}</td>
+        <td class="small text-muted">{{ n.driver }}</td>
+        <td class="small">
+          {% if n.scope == 'local' %}
+            <span class="badge bg-secondary">local</span>
+          {% elif n.scope == 'global' %}
+            <span class="badge bg-info text-dark">global</span>
+          {% else %}
+            <span class="badge bg-dark border border-secondary">{{ n.scope }}</span>
+          {% endif %}
+        </td>
+        <td class="font-monospace small text-muted">{{ n.id }}</td>
+        <td class="font-monospace small">{{ n.subnet }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-center text-muted py-5">No networks found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
