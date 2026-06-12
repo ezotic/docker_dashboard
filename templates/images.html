@@ -11,9 +11,9 @@
     <thead class="text-muted small">
       <tr>
         <th>Name : Tag</th>
-        <th>Image ID</th>
+        <th class="d-none d-md-table-cell">Image ID</th>
         <th>Size</th>
-        <th>Created</th>
+        <th class="d-none d-sm-table-cell">Created</th>
         <th class="text-end">Actions</th>
       </tr>
     </thead>
@@ -22,9 +22,9 @@
       {% for tag in img.tags %}
       <tr>
         <td class="font-monospace small">{{ tag }}</td>
-        <td class="font-monospace small text-muted">{{ img.short_id }}</td>
+        <td class="font-monospace small text-muted d-none d-md-table-cell">{{ img.short_id }}</td>
         <td class="small">{{ img.size }}</td>
-        <td class="small text-muted">{{ img.created }}</td>
+        <td class="small text-muted d-none d-sm-table-cell">{{ img.created }}</td>
         <td class="text-end">
           <div class="btn-group btn-group-sm">
             <button class="btn btn-outline-secondary inspect-btn"

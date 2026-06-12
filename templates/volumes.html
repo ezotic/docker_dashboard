@@ -11,8 +11,8 @@
     <thead class="text-muted small">
       <tr>
         <th>Name</th>
-        <th>Driver</th>
-        <th>Mountpoint</th>
+        <th class="d-none d-sm-table-cell">Driver</th>
+        <th class="d-none d-md-table-cell">Mountpoint</th>
         <th class="text-end">Actions</th>
       </tr>
     </thead>
@@ -20,8 +20,8 @@
       {% for v in volumes %}
       <tr>
         <td class="font-monospace small">{{ v.name }}</td>
-        <td class="small text-muted">{{ v.driver }}</td>
-        <td class="small text-muted font-monospace" style="word-break:break-all;">{{ v.mountpoint }}</td>
+        <td class="small text-muted d-none d-sm-table-cell">{{ v.driver }}</td>
+        <td class="small text-muted font-monospace text-break d-none d-md-table-cell">{{ v.mountpoint }}</td>
         <td class="text-end">
           <button class="btn btn-sm btn-outline-danger remove-vol-btn"
             data-name="{{ v.name }}" title="Remove">

@@ -11,12 +11,12 @@
     <thead class="text-muted small">
       <tr>
         <th>Name</th>
-        <th>Image</th>
+        <th class="d-none d-md-table-cell">Image</th>
         <th>Status</th>
-        <th>Ports</th>
-        <th>Uptime</th>
-        <th>CPU %</th>
-        <th>Memory</th>
+        <th class="d-none d-lg-table-cell">Ports</th>
+        <th class="d-none d-lg-table-cell">Uptime</th>
+        <th class="d-none d-xl-table-cell">CPU %</th>
+        <th class="d-none d-xl-table-cell">Memory</th>
         <th class="text-end">Actions</th>
       </tr>
     </thead>
@@ -28,7 +28,9 @@
             <i class="bi bi-terminal me-1 text-muted"></i>{{ c.name }}
           </a>
         </td>
-        <td><span class="text-muted small font-monospace">{{ c.image }}</span></td>
+        <td class="d-none d-md-table-cell">
+          <span class="text-muted small font-monospace">{{ c.image }}</span>
+        </td>
         <td>
           {% if c.status == 'running' %}
             <span class="badge bg-success">running</span>
@@ -40,10 +42,18 @@
             <span class="badge bg-dark text-light border border-secondary">{{ c.status }}</span>
           {% endif %}
         </td>
-        <td><span class="small text-muted">{{ c.ports }}</span></td>
-        <td><span class="small">{{ c.uptime }}</span></td>
-        <td><span id="cpu-{{ c.short_id }}" class="small">—</span></td>
-        <td><span id="mem-{{ c.short_id }}" class="small">—</span></td>
+        <td class="d-none d-lg-table-cell">
+          <span class="small text-muted">{{ c.ports }}</span>
+        </td>
+        <td class="d-none d-lg-table-cell">
+          <span class="small">{{ c.uptime }}</span>
+        </td>
+        <td class="d-none d-xl-table-cell">
+          <span id="cpu-{{ c.short_id }}" class="small">—</span>
+        </td>
+        <td class="d-none d-xl-table-cell">
+          <span id="mem-{{ c.short_id }}" class="small">—</span>
+        </td>
         <td class="text-end">
           <div class="btn-group btn-group-sm">
             <button class="btn btn-outline-success" data-action="start" data-id="{{ c.id }}"
@@ -54,7 +64,7 @@
               title="Stop" {% if c.status != 'running' %}disabled{% endif %}>
               <i class="bi bi-stop-fill"></i>
             </button>
-            <button class="btn btn-outline-info" data-action="restart" data-id="{{ c.id }}"
+            <button class="btn btn-outline-info d-none d-sm-inline-flex" data-action="restart" data-id="{{ c.id }}"
               title="Restart" {% if c.status != 'running' %}disabled{% endif %}>
               <i class="bi bi-arrow-clockwise"></i>
             </button>

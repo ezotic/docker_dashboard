@@ -12,36 +12,54 @@
 
 <div class="d-flex" style="min-height: 100vh;">
 
-  <!-- Sidebar -->
-  <nav class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 220px;">
-    <a href="/" class="d-flex align-items-center mb-4 text-decoration-none">
+  <!-- Sidebar — offcanvas on mobile, sticky on md+ -->
+  <div class="offcanvas offcanvas-md offcanvas-start sidebar flex-shrink-0 d-md-flex flex-column p-3"
+       tabindex="-1" id="sidebarMenu" style="width: 220px;">
+
+    <!-- Close button row — mobile only -->
+    <div class="d-flex d-md-none justify-content-between align-items-center mb-4">
+      <a href="/" class="d-flex align-items-center text-decoration-none">
+        <i class="bi bi-hdd-network-fill text-info me-2 fs-4"></i>
+        <span class="fw-bold fs-5 text-white">Docker</span>
+      </a>
+      <button type="button" class="btn-close btn-close-white"
+              data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"></button>
+    </div>
+
+    <!-- Brand — desktop only -->
+    <a href="/" class="d-none d-md-flex align-items-center mb-4 text-decoration-none">
       <i class="bi bi-hdd-network-fill text-info me-2 fs-4"></i>
       <span class="fw-bold fs-5 text-white">Docker</span>
     </a>
 
     <ul class="nav nav-pills flex-column mb-auto gap-1">
       <li class="nav-item">
-        <a href="/" class="nav-link text-light {% if request.path == '/' %}active{% endif %}">
+        <a href="/" class="nav-link text-light {% if request.path == '/' %}active{% endif %}"
+           data-bs-dismiss="offcanvas">
           <i class="bi bi-speedometer2 me-2"></i>Dashboard
         </a>
       </li>
       <li class="nav-item">
-        <a href="/containers" class="nav-link text-light {% if request.path.startswith('/containers') %}active{% endif %}">
+        <a href="/containers" class="nav-link text-light {% if request.path.startswith('/containers') %}active{% endif %}"
+           data-bs-dismiss="offcanvas">
           <i class="bi bi-box-seam me-2"></i>Containers
         </a>
       </li>
       <li class="nav-item">
-        <a href="/images" class="nav-link text-light {% if request.path == '/images' %}active{% endif %}">
+        <a href="/images" class="nav-link text-light {% if request.path == '/images' %}active{% endif %}"
+           data-bs-dismiss="offcanvas">
           <i class="bi bi-layers me-2"></i>Images
         </a>
       </li>
       <li class="nav-item">
-        <a href="/volumes" class="nav-link text-light {% if request.path == '/volumes' %}active{% endif %}">
+        <a href="/volumes" class="nav-link text-light {% if request.path == '/volumes' %}active{% endif %}"
+           data-bs-dismiss="offcanvas">
           <i class="bi bi-database me-2"></i>Volumes
         </a>
       </li>
       <li class="nav-item">
-        <a href="/networks" class="nav-link text-light {% if request.path == '/networks' %}active{% endif %}">
+        <a href="/networks" class="nav-link text-light {% if request.path == '/networks' %}active{% endif %}"
+           data-bs-dismiss="offcanvas">
           <i class="bi bi-diagram-3 me-2"></i>Networks
         </a>
       </li>
@@ -53,15 +71,20 @@
         <span id="daemon-label">{% if connected %}Daemon connected{% else %}Daemon offline{% endif %}</span>
       </small>
     </div>
-  </nav>
+  </div>
 
   <!-- Main content -->
-  <div class="flex-grow-1 d-flex flex-column">
-    <header class="topbar px-4 py-3 d-flex align-items-center border-bottom border-secondary">
+  <div class="flex-grow-1 d-flex flex-column" style="min-width: 0;">
+    <header class="topbar px-3 px-md-4 py-3 d-flex align-items-center border-bottom border-secondary gap-2">
+      <!-- Hamburger — mobile only -->
+      <button class="btn btn-link text-secondary d-md-none p-0 border-0 lh-1"
+              data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-label="Open menu">
+        <i class="bi bi-list fs-3"></i>
+      </button>
       <h6 class="mb-0 text-muted">{% block header %}{% endblock %}</h6>
     </header>
 
-    <main class="flex-grow-1 p-4">
+    <main class="flex-grow-1 p-3 p-md-4">
       {% block content %}{% endblock %}
     </main>
   </div>

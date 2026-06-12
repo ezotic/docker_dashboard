@@ -11,17 +11,17 @@
     <thead class="text-muted small">
       <tr>
         <th>Name</th>
-        <th>Driver</th>
+        <th class="d-none d-sm-table-cell">Driver</th>
         <th>Scope</th>
-        <th>Network ID</th>
-        <th>Subnet</th>
+        <th class="d-none d-md-table-cell">Network ID</th>
+        <th class="d-none d-lg-table-cell">Subnet</th>
       </tr>
     </thead>
     <tbody>
       {% for n in networks %}
       <tr>
         <td class="fw-semibold">{{ n.name }}</td>
-        <td class="small text-muted">{{ n.driver }}</td>
+        <td class="small text-muted d-none d-sm-table-cell">{{ n.driver }}</td>
         <td class="small">
           {% if n.scope == 'local' %}
             <span class="badge bg-secondary">local</span>
@@ -31,8 +31,8 @@
             <span class="badge bg-dark border border-secondary">{{ n.scope }}</span>
           {% endif %}
         </td>
-        <td class="font-monospace small text-muted">{{ n.id }}</td>
-        <td class="font-monospace small">{{ n.subnet }}</td>
+        <td class="font-monospace small text-muted d-none d-md-table-cell">{{ n.id }}</td>
+        <td class="font-monospace small d-none d-lg-table-cell">{{ n.subnet }}</td>
       </tr>
       {% else %}
       <tr><td colspan="5" class="text-center text-muted py-5">No networks found.</td></tr>
