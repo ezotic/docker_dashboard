@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import re
+import secrets
 
 # Python version check
 if sys.version_info < (3, 9):
@@ -16,10 +17,48 @@ app = Flask(__name__)
 FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
 FLASK_PORT = int(os.getenv("FLASK_PORT", 5000))
 HOSTS_FILE = os.getenv("HOSTS_FILE", os.path.join(os.path.dirname(__file__), "hosts.json"))
+DASHBOARD_USERNAME = os.getenv("DASHBOARD_USERNAME", "admin")
+DASHBOARD_PASSWORD = os.getenv("DASHBOARD_PASSWORD", "changeme")
+CSRF_TOKEN = secrets.token_urlsafe(32)
 
 _DEFAULT_HOSTS = {"hosts": [
     {"id": "local", "name": "Local", "url": "unix:///var/run/docker.sock", "is_local": True}
 ]}
+
+
+def _auth_challenge():
+    return Response(
+        "Authentication required\n",
+        401,
+        {"WWW-Authenticate": 'Basic realm="Docker Dashboard"'},
+    )
+
+
+@app.before_request
+def require_basic_auth():
+    auth = request.authorization
+    if not auth:
+        return _auth_challenge()
+    username_ok = secrets.compare_digest(auth.username or "", DASHBOARD_USERNAME)
+    password_ok = secrets.compare_digest(auth.password or "", DASHBOARD_PASSWORD)
+    if not username_ok or not password_ok:
+        return _auth_challenge()
+    return None
+
+
+@app.before_request
+def require_csrf_token():
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return None
+    token = request.headers.get("X-CSRF-Token", "")
+    if not secrets.compare_digest(token, CSRF_TOKEN):
+        return jsonify({"error": "Invalid CSRF token"}), 403
+    return None
+
+
+@app.context_processor
+def inject_csrf_token():
+    return {"csrf_token": CSRF_TOKEN}
 
 
 # ── Host helpers ──────────────────────────────────────────────────────────────

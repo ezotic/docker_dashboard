@@ -67,10 +67,14 @@ See [requirements.txt](requirements.txt) for detailed dependency versions.
 # Copy the hosts template and edit it with your remote hosts
 cp hosts.json.template hosts.json
 
+# Set a dashboard password before starting
+export DASHBOARD_PASSWORD='choose-a-strong-password'
+
 docker-compose up --build
 ```
 
-Access the dashboard at `http://localhost:5000`
+Access the dashboard at `http://localhost:5000` and sign in with username `admin`
+and the password from `DASHBOARD_PASSWORD`.
 
 ### Alternative: Run Locally (Python)
 
@@ -91,10 +95,23 @@ If you prefer to run the application directly with Python instead of Docker:
 pip install -r requirements.txt
 
 # Run the application
+DASHBOARD_PASSWORD='choose-a-strong-password' \
 python app.py
 ```
 
 Access the dashboard at `http://localhost:5000`
+
+### Authentication
+
+The dashboard uses HTTP Basic Authentication. Configure credentials with:
+
+```bash
+export DASHBOARD_USERNAME=admin
+export DASHBOARD_PASSWORD='choose-a-strong-password'
+```
+
+Docker Compose defaults to `admin` / `changeme` if these variables are not set.
+Change the password before using the dashboard on your LAN.
 
 ## Running the Application
 

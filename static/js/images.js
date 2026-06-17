@@ -30,7 +30,7 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
   if (!pendingId) return;
   confirmModal.hide();
   try {
-    const res = await fetch(apiUrl(`/api/images/${encodeURIComponent(pendingId)}`), { method: 'DELETE' });
+    const res = await csrfFetch(apiUrl(`/api/images/${encodeURIComponent(pendingId)}`), { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
       showToast(data.error || 'Remove failed');

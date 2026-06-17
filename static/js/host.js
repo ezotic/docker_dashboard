@@ -34,9 +34,13 @@ function _updateNavLinks(hostId) {
     const select = document.getElementById('host-select');
     if (select) {
       const active = getActiveHost();
-      select.innerHTML = hosts.map(h =>
-        `<option value="${h.id}"${h.id === active ? ' selected' : ''}>${h.name}</option>`
-      ).join('');
+      select.replaceChildren(...hosts.map(h => {
+        const option = document.createElement('option');
+        option.value = h.id;
+        option.textContent = h.name;
+        option.selected = h.id === active;
+        return option;
+      }));
 
       select.addEventListener('change', () => {
         setActiveHost(select.value);

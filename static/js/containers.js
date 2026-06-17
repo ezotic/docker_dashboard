@@ -18,7 +18,7 @@ table && table.addEventListener('click', async e => {
 
   btn.disabled = true;
   try {
-    const res = await fetch(apiUrl(`/api/containers/${id}/${action}`), { method: 'POST' });
+    const res = await csrfFetch(apiUrl(`/api/containers/${id}/${action}`), { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
       showToast(data.error || 'Action failed');
@@ -36,7 +36,7 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
   if (!pendingRemoveId) return;
   confirmModal.hide();
   try {
-    const res = await fetch(apiUrl(`/api/containers/${pendingRemoveId}`), { method: 'DELETE' });
+    const res = await csrfFetch(apiUrl(`/api/containers/${pendingRemoveId}`), { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
       showToast(data.error || 'Remove failed');

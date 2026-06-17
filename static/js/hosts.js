@@ -11,19 +11,19 @@ async function loadHosts() {
     }
 
     tbody.innerHTML = hosts.map(h => `
-      <tr data-id="${h.id}">
+      <tr data-id="${escHtml(h.id)}">
         <td class="fw-semibold">${escHtml(h.name)}</td>
         <td class="font-monospace small text-muted d-none d-sm-table-cell">${escHtml(h.url)}</td>
         <td>
           ${h.connected
             ? '<span class="badge bg-success">connected</span>'
-            : `<span class="badge bg-danger" title="${escHtml(h.error || '')}"">offline</span>`}
+            : `<span class="badge bg-danger" title="${escHtml(h.error || '')}">offline</span>`}
         </td>
         <td class="text-muted small d-none d-md-table-cell">${escHtml(h.version || '—')}</td>
         <td class="text-end">
           ${h.is_local ? '' : `
             <button class="btn btn-sm btn-outline-danger delete-host-btn"
-                    data-id="${h.id}" data-name="${escHtml(h.name)}">
+                    data-id="${escHtml(h.id)}" data-name="${escHtml(h.name)}">
               <i class="bi bi-trash3"></i>
             </button>
           `}
@@ -36,7 +36,7 @@ async function loadHosts() {
         if (!confirm(`Remove host "${btn.dataset.name}"?`)) return;
         btn.disabled = true;
         try {
-          const res = await fetch(`/api/hosts/${encodeURIComponent(btn.dataset.id)}`, { method: 'DELETE' });
+          const res = await csrfFetch(`/api/hosts/${encodeURIComponent(btn.dataset.id)}`, { method: 'DELETE' });
           const data = await res.json();
           if (res.ok) {
             if (getActiveHost() === btn.dataset.id) setActiveHost('local');
@@ -71,7 +71,7 @@ document.getElementById('add-host-btn').addEventListener('click', async () => {
   const btn = document.getElementById('add-host-btn');
   btn.disabled = true;
   try {
-    const res = await fetch('/api/hosts', {
+    const res = await csrfFetch('/api/hosts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, url }),
