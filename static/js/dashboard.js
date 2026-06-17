@@ -15,7 +15,7 @@ const diskKeyMap = {
 
 async function refreshDashboard() {
   try {
-    const res = await fetch('/api/dashboard');
+    const res = await fetch(apiUrl('/api/dashboard'));
     if (!res.ok) return;
     const data = await res.json();
     for (const [key, id] of Object.entries(statMap)) {

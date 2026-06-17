@@ -1,7 +1,9 @@
-from flask import Flask, render_template, jsonify, Response, abort
+from flask import Flask, render_template, jsonify, Response, request
 import docker_client as dc
 import os
 import sys
+import json
+import re
 
 # Python version check
 if sys.version_info < (3, 9):
@@ -13,97 +15,249 @@ app = Flask(__name__)
 # Configuration
 FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
 FLASK_PORT = int(os.getenv("FLASK_PORT", 5000))
+HOSTS_FILE = os.getenv("HOSTS_FILE", os.path.join(os.path.dirname(__file__), "hosts.json"))
+
+_DEFAULT_HOSTS = {"hosts": [
+    {"id": "local", "name": "Local", "url": "unix:///var/run/docker.sock", "is_local": True}
+]}
+
+
+# ── Host helpers ──────────────────────────────────────────────────────────────
+
+def _load_hosts() -> dict:
+    if not os.path.exists(HOSTS_FILE) or os.path.isdir(HOSTS_FILE):
+        if os.path.isdir(HOSTS_FILE):
+            os.rmdir(HOSTS_FILE)
+        _save_hosts(_DEFAULT_HOSTS)
+        return _DEFAULT_HOSTS
+    try:
+        with open(HOSTS_FILE) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        _save_hosts(_DEFAULT_HOSTS)
+        return _DEFAULT_HOSTS
+
+
+def _save_hosts(data: dict) -> None:
+    with open(HOSTS_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+def _get_host_by_id(host_id: str) -> dict | None:
+    for h in _load_hosts()["hosts"]:
+        if h["id"] == host_id:
+            return h
+    return None
+
+
+def _slugify(name: str) -> str:
+    return re.sub(r"[^a-z0-9-]+", "-", name.lower().strip()).strip("-")
+
+
+def _resolve_client():
+    """Read ?host= from request, return (host_dict, docker_client).
+    Falls back to local host if param is missing. Returns (None, None) if host not found."""
+    host_id = request.args.get("host", "local")
+    host = _get_host_by_id(host_id)
+    if not host:
+        return None, None
+    return host, dc.get_client(host["id"], host["url"])
 
 
 # ── Page routes ──────────────────────────────────────────────────────────────
 
 @app.route("/")
 def dashboard():
-    stats = dc.get_dashboard_stats()
-    return render_template("dashboard.html", stats=stats, connected=stats.get("connected", False))
+    host, client = _resolve_client()
+    if host is None:
+        host = _get_host_by_id("local")
+        client = dc.get_client("local", host["url"])
+    stats = dc.get_dashboard_stats(client)
+    return render_template("dashboard.html", stats=stats,
+                           connected=stats.get("connected", False),
+                           active_host=host)
 
 
 @app.route("/containers")
 def containers():
-    items = dc.list_containers()
+    host, client = _resolve_client()
+    if host is None:
+        host = _get_host_by_id("local")
+        client = dc.get_client("local", host["url"])
+    items = dc.list_containers(client) if client else {"error": "Unreachable"}
     connected = not isinstance(items, dict)
-    return render_template("containers.html", containers=items if connected else [], connected=connected)
+    return render_template("containers.html", containers=items if connected else [],
+                           connected=connected, active_host=host)
 
 
 @app.route("/images")
 def images():
-    items = dc.list_images()
+    host, client = _resolve_client()
+    if host is None:
+        host = _get_host_by_id("local")
+        client = dc.get_client("local", host["url"])
+    items = dc.list_images(client) if client else {"error": "Unreachable"}
     connected = not isinstance(items, dict)
-    return render_template("images.html", images=items if connected else [], connected=connected)
+    return render_template("images.html", images=items if connected else [],
+                           connected=connected, active_host=host)
 
 
 @app.route("/volumes")
 def volumes():
-    items = dc.list_volumes()
+    host, client = _resolve_client()
+    if host is None:
+        host = _get_host_by_id("local")
+        client = dc.get_client("local", host["url"])
+    items = dc.list_volumes(client) if client else {"error": "Unreachable"}
     connected = not isinstance(items, dict)
-    return render_template("volumes.html", volumes=items if connected else [], connected=connected)
+    return render_template("volumes.html", volumes=items if connected else [],
+                           connected=connected, active_host=host)
 
 
 @app.route("/networks")
 def networks():
-    items = dc.list_networks()
+    host, client = _resolve_client()
+    if host is None:
+        host = _get_host_by_id("local")
+        client = dc.get_client("local", host["url"])
+    items = dc.list_networks(client) if client else {"error": "Unreachable"}
     connected = not isinstance(items, dict)
-    return render_template("networks.html", networks=items if connected else [], connected=connected)
+    return render_template("networks.html", networks=items if connected else [],
+                           connected=connected, active_host=host)
 
 
 @app.route("/containers/<container_id>/logs")
 def container_logs(container_id):
-    name = dc.get_container_name(container_id)
-    return render_template("logs.html", container_id=container_id, container_name=name, connected=True)
+    host, client = _resolve_client()
+    if host is None:
+        host = _get_host_by_id("local")
+        client = dc.get_client("local", host["url"])
+    name = dc.get_container_name(client, container_id) if client else container_id[:12]
+    return render_template("logs.html", container_id=container_id,
+                           container_name=name, connected=client is not None,
+                           active_host=host)
 
 
-# ── API routes ────────────────────────────────────────────────────────────────
+@app.route("/hosts")
+def hosts_page():
+    return render_template("hosts.html", active_host={"id": "local", "name": "Local"}, connected=True)
+
+
+# ── Host API ──────────────────────────────────────────────────────────────────
+
+@app.route("/api/hosts")
+def api_hosts():
+    data = _load_hosts()
+    result = []
+    for h in data["hosts"]:
+        status = dc.check_host_status(h["id"], h["url"])
+        result.append({**h, **status})
+    return jsonify(result)
+
+
+@app.route("/api/hosts", methods=["POST"])
+def api_host_add():
+    body = request.get_json(silent=True) or {}
+    name = (body.get("name") or "").strip()
+    url = (body.get("url") or "").strip()
+    if not name or not url:
+        return jsonify({"error": "name and url are required"}), 400
+    data = _load_hosts()
+    base_id = _slugify(name) or "host"
+    new_id, counter = base_id, 2
+    existing_ids = {h["id"] for h in data["hosts"]}
+    while new_id in existing_ids:
+        new_id = f"{base_id}-{counter}"
+        counter += 1
+    data["hosts"].append({"id": new_id, "name": name, "url": url, "is_local": False})
+    _save_hosts(data)
+    return jsonify({"id": new_id, "name": name, "url": url}), 201
+
+
+@app.route("/api/hosts/<host_id>", methods=["DELETE"])
+def api_host_delete(host_id):
+    if host_id == "local":
+        return jsonify({"error": "Cannot remove the local host"}), 400
+    data = _load_hosts()
+    original_len = len(data["hosts"])
+    data["hosts"] = [h for h in data["hosts"] if h["id"] != host_id]
+    if len(data["hosts"]) == original_len:
+        return jsonify({"error": "Host not found"}), 404
+    dc.evict_client(host_id)
+    _save_hosts(data)
+    return jsonify({"ok": True})
+
+
+# ── Container API ─────────────────────────────────────────────────────────────
 
 @app.route("/api/dashboard")
 def api_dashboard():
-    return jsonify(dc.get_dashboard_stats())
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable", "connected": False}), 503
+    return jsonify(dc.get_dashboard_stats(client))
 
 
 @app.route("/api/containers")
 def api_containers():
-    return jsonify(dc.list_containers())
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return jsonify(dc.list_containers(client))
 
 
 @app.route("/api/containers/<container_id>/start", methods=["POST"])
 def api_container_start(container_id):
-    result = dc.container_action(container_id, "start")
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.container_action(client, container_id, "start"))
 
 
 @app.route("/api/containers/<container_id>/stop", methods=["POST"])
 def api_container_stop(container_id):
-    result = dc.container_action(container_id, "stop")
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.container_action(client, container_id, "stop"))
 
 
 @app.route("/api/containers/<container_id>/restart", methods=["POST"])
 def api_container_restart(container_id):
-    result = dc.container_action(container_id, "restart")
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.container_action(client, container_id, "restart"))
 
 
 @app.route("/api/containers/<container_id>", methods=["DELETE"])
 def api_container_remove(container_id):
-    result = dc.remove_container(container_id)
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.remove_container(client, container_id))
 
 
 @app.route("/api/containers/<container_id>/stats")
 def api_container_stats(container_id):
-    result = dc.get_container_stats(container_id)
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.get_container_stats(client, container_id))
 
 
 @app.route("/api/containers/<container_id>/logs/stream")
 def api_container_logs_stream(container_id):
-    def generate():
+    host, client = _resolve_client()
+    if client is None:
+        def _err():
+            yield "data: [host not found or unreachable]\n\n"
+        return Response(_err(), mimetype="text/event-stream",
+                        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
+
+    def generate(c):
         try:
-            for line in dc.stream_container_logs(container_id):
+            for line in dc.stream_container_logs(c, container_id):
                 text = line.decode("utf-8", errors="replace").rstrip("\n")
                 if text:
                     yield f"data: {text}\n\n"
@@ -111,43 +265,64 @@ def api_container_logs_stream(container_id):
             yield f"data: [stream error: {e}]\n\n"
 
     return Response(
-        generate(),
+        generate(client),
         mimetype="text/event-stream",
         headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
     )
 
 
+# ── Image API ─────────────────────────────────────────────────────────────────
+
 @app.route("/api/images")
 def api_images():
-    return jsonify(dc.list_images())
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return jsonify(dc.list_images(client))
 
 
 @app.route("/api/images/<path:image_id>/inspect")
 def api_image_inspect(image_id):
-    result = dc.inspect_image(image_id)
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.inspect_image(client, image_id))
 
 
 @app.route("/api/images/<path:image_id>", methods=["DELETE"])
 def api_image_remove(image_id):
-    result = dc.remove_image(image_id)
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.remove_image(client, image_id))
 
+
+# ── Volume API ────────────────────────────────────────────────────────────────
 
 @app.route("/api/volumes")
 def api_volumes():
-    return jsonify(dc.list_volumes())
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return jsonify(dc.list_volumes(client))
 
 
 @app.route("/api/volumes/<path:name>", methods=["DELETE"])
 def api_volume_remove(name):
-    result = dc.remove_volume(name)
-    return _action_response(result)
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return _action_response(dc.remove_volume(client, name))
 
+
+# ── Network API ───────────────────────────────────────────────────────────────
 
 @app.route("/api/networks")
 def api_networks():
-    return jsonify(dc.list_networks())
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return jsonify(dc.list_networks(client))
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

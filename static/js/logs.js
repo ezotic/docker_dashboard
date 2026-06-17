@@ -3,7 +3,7 @@ const containerId = logBox.dataset.containerId;
 const statusBadge = document.getElementById('stream-status');
 let autoScroll = true;
 
-const source = new EventSource(`/api/containers/${containerId}/logs/stream`);
+const source = new EventSource(apiUrl(`/api/containers/${containerId}/logs/stream`));
 
 source.onmessage = e => {
   const line = document.createElement('span');

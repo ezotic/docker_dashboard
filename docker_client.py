@@ -1,34 +1,61 @@
 import docker
+import threading
 from datetime import datetime, timezone
 import os
 import platform
 
-_client_error = None
+_clients: dict = {}
+_client_errors: dict = {}
+_lock = threading.Lock()
 
-def _create_client():
-    global _client_error
-    # docker.from_env() respects DOCKER_HOST env var — works for both
-    # Unix socket (Linux/macOS) and named pipe (Windows via DOCKER_HOST).
+
+def get_client(host_id: str, url: str):
+    with _lock:
+        if host_id not in _clients:
+            _clients[host_id] = _create_client(host_id, url)
+        return _clients[host_id]
+
+
+def evict_client(host_id: str) -> None:
+    with _lock:
+        _clients.pop(host_id, None)
+        _client_errors.pop(host_id, None)
+
+
+def check_host_status(host_id: str, url: str) -> dict:
+    c = get_client(host_id, url)
+    if c is None:
+        return {"connected": False, "error": _client_errors.get(host_id), "version": None}
     try:
-        c = docker.from_env()
+        info = c.version()
+        return {"connected": True, "error": None, "version": info.get("Version")}
+    except Exception as e:
+        evict_client(host_id)
+        return {"connected": False, "error": str(e), "version": None}
+
+
+def _create_client(host_id: str, url: str):
+    try:
+        if host_id == "local" or url.startswith("unix://"):
+            c = docker.from_env()
+        else:
+            c = docker.DockerClient(base_url=url, timeout=5)
         c.ping()
         return c
     except Exception as e:
         system = platform.system()
         docker_host = os.getenv("DOCKER_HOST", "not set")
         error_msg = str(e)
-        
-        # Provide platform-specific guidance
-        if system == "Windows" and "npipe" not in docker_host.lower():
-            _client_error = f"{error_msg}. Windows users: ensure Docker Desktop is running. If using a named pipe, set DOCKER_HOST=npipe:////./pipe/docker_engine"
-        elif system in ("Linux", "Darwin") and "/var/run/docker.sock" not in error_msg:
-            _client_error = f"{error_msg}. {system} users: ensure Docker daemon is running and accessible at /var/run/docker.sock"
+        if host_id == "local":
+            if system == "Windows" and "npipe" not in docker_host.lower():
+                _client_errors[host_id] = f"{error_msg}. Windows users: ensure Docker Desktop is running."
+            elif system in ("Linux", "Darwin") and "/var/run/docker.sock" not in error_msg:
+                _client_errors[host_id] = f"{error_msg}. {system} users: ensure Docker daemon is running."
+            else:
+                _client_errors[host_id] = f"{error_msg}. DOCKER_HOST={docker_host}"
         else:
-            _client_error = f"{error_msg}. DOCKER_HOST={docker_host}"
-        
+            _client_errors[host_id] = error_msg
         return None
-
-client = _create_client()
 
 
 def _fmt_size(bytes_val):
@@ -59,17 +86,9 @@ def _fmt_uptime(started_at_str):
         return "—"
 
 
-def _is_connected():
-    try:
-        client.ping()
-        return True
-    except Exception:
-        return False
-
-
-def get_dashboard_stats():
+def get_dashboard_stats(client) -> dict:
     if client is None:
-        return {"error": _client_error or "Docker client unavailable", "connected": False}
+        return {"error": "Docker client unavailable", "connected": False}
     try:
         containers = client.containers.list(all=True)
         running = sum(1 for c in containers if c.status == "running")
@@ -96,7 +115,7 @@ def get_dashboard_stats():
         return {"error": str(e), "connected": False}
 
 
-def list_containers():
+def list_containers(client) -> list | dict:
     try:
         containers = client.containers.list(all=True)
         result = []
@@ -124,7 +143,7 @@ def list_containers():
         return {"error": str(e)}
 
 
-def container_action(container_id, action):
+def container_action(client, container_id, action):
     try:
         c = client.containers.get(container_id)
         if action == "start":
@@ -142,7 +161,7 @@ def container_action(container_id, action):
         return {"error": str(e)}, 500
 
 
-def remove_container(container_id):
+def remove_container(client, container_id):
     try:
         c = client.containers.get(container_id)
         c.remove(force=True)
@@ -153,7 +172,7 @@ def remove_container(container_id):
         return {"error": str(e)}, 500
 
 
-def get_container_stats(container_id):
+def get_container_stats(client, container_id):
     try:
         c = client.containers.get(container_id)
         if c.status != "running":
@@ -175,23 +194,23 @@ def get_container_stats(container_id):
         }
     except docker.errors.NotFound:
         return {"error": "Container not found"}, 404
-    except Exception as e:
+    except Exception:
         return {"cpu_percent": 0, "mem_usage": "—", "mem_limit": "—", "mem_percent": 0}
 
 
-def stream_container_logs(container_id, tail=200):
+def stream_container_logs(client, container_id, tail=200):
     c = client.containers.get(container_id)
     return c.logs(stream=True, follow=True, tail=tail, timestamps=True)
 
 
-def get_container_name(container_id):
+def get_container_name(client, container_id):
     try:
         return client.containers.get(container_id).name
     except Exception:
         return container_id[:12]
 
 
-def list_images():
+def list_images(client) -> list | dict:
     try:
         images = client.images.list()
         result = []
@@ -214,7 +233,7 @@ def list_images():
         return {"error": str(e)}
 
 
-def inspect_image(image_id):
+def inspect_image(client, image_id):
     try:
         return client.images.get(image_id).attrs
     except docker.errors.NotFound:
@@ -223,7 +242,7 @@ def inspect_image(image_id):
         return {"error": str(e)}, 500
 
 
-def remove_image(image_id):
+def remove_image(client, image_id):
     try:
         client.images.remove(image_id, force=True)
         return {"ok": True}
@@ -233,7 +252,7 @@ def remove_image(image_id):
         return {"error": str(e)}, 409
 
 
-def list_volumes():
+def list_volumes(client) -> list | dict:
     try:
         vols = client.volumes.list()
         result = []
@@ -249,7 +268,7 @@ def list_volumes():
         return {"error": str(e)}
 
 
-def remove_volume(name):
+def remove_volume(client, name):
     try:
         v = client.volumes.get(name)
         v.remove()
@@ -260,7 +279,7 @@ def remove_volume(name):
         return {"error": str(e)}, 409
 
 
-def list_networks():
+def list_networks(client) -> list | dict:
     try:
         nets = client.networks.list()
         result = []
@@ -279,7 +298,6 @@ def list_networks():
         return {"error": str(e)}
 
 
-def is_connected():
-    if client is None:
-        return False
-    return _is_connected()
+def is_connected() -> bool:
+    status = check_host_status("local", "local")
+    return status["connected"]

@@ -1,0 +1,16 @@
+{
+  "hosts": [
+    {
+      "id": "local",
+      "name": "Local",
+      "url": "unix:///var/run/docker.sock",
+      "is_local": true
+    },
+    {
+      "id": "raspberry-pi",
+      "name": "Raspberry Pi",
+      "url": "tcp://192.168.1.x:2375",
+      "is_local": false
+    }
+  ]
+}

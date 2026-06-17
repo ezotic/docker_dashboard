@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Hosts — Docker Dashboard{% endblock %}
+{% block header %}Hosts{% endblock %}
+
+{% block content %}
+<div class="card bg-secondary-subtle border-0 mb-4" style="max-width: 480px;">
+  <div class="card-body">
+    <h6 class="mb-3">Add Host</h6>
+    <div class="mb-2">
+      <label class="form-label small text-muted">Name</label>
+      <input id="host-name" type="text"
+             class="form-control form-control-sm bg-dark text-light border-secondary"
+             placeholder="Pi Living Room">
+    </div>
+    <div class="mb-3">
+      <label class="form-label small text-muted">Docker TCP URL</label>
+      <input id="host-url" type="text"
+             class="form-control form-control-sm bg-dark text-light border-secondary"
+             placeholder="tcp://192.168.1.100:2375">
+      <div class="form-text text-muted" style="font-size:0.75rem;">
+        Remote Docker daemon must expose TCP. See README for setup instructions.
+      </div>
+    </div>
+    <button id="add-host-btn" class="btn btn-sm btn-info">
+      <i class="bi bi-plus-circle me-1"></i>Add Host
+    </button>
+    <span id="add-host-error" class="text-danger small ms-2 d-none"></span>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-dark table-hover align-middle" id="hosts-table">
+    <thead class="text-muted" style="font-size:0.8rem;">
+      <tr>
+        <th>Name</th>
+        <th class="d-none d-sm-table-cell">URL</th>
+        <th>Status</th>
+        <th class="d-none d-md-table-cell">Docker Version</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="hosts-tbody">
+      <tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/hosts.js"></script>
+{% endblock %}

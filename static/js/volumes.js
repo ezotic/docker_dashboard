@@ -13,7 +13,7 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
   if (!pendingName) return;
   confirmModal.hide();
   try {
-    const res = await fetch(`/api/volumes/${encodeURIComponent(pendingName)}`, { method: 'DELETE' });
+    const res = await fetch(apiUrl(`/api/volumes/${encodeURIComponent(pendingName)}`), { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
       showToast(data.error || 'Remove failed');

@@ -58,9 +58,21 @@
           <i class="bi bi-diagram-3 me-2"></i>Networks
         </a>
       </li>
+      <li class="nav-item">
+        <a href="/hosts" class="nav-link text-light {% if request.path == '/hosts' %}active{% endif %}">
+          <i class="bi bi-hdd-stack me-2"></i>Hosts
+        </a>
+      </li>
     </ul>
 
-    <div class="mt-auto pt-3 border-top border-secondary">
+    <div class="mb-3 mt-3">
+      <label class="text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:.06em;">Host</label>
+      <select id="host-select" class="form-select form-select-sm bg-dark text-light border-secondary mt-1">
+        <option value="local">Local</option>
+      </select>
+    </div>
+
+    <div class="pt-3 border-top border-secondary">
       <small class="text-muted d-flex align-items-center gap-2">
         <span id="daemon-dot" class="status-dot {% if connected %}dot-green{% else %}dot-red{% endif %}"></span>
         <span id="daemon-label">{% if connected %}Daemon connected{% else %}Daemon offline{% endif %}</span>
@@ -104,6 +116,7 @@
     bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show();
   }
 </script>
+<script src="/static/js/host.js"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

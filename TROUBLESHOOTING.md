@@ -234,6 +234,109 @@ ps aux | grep -i docker | grep -v grep
 
 Save as `check-setup.sh`, run with `bash check-setup.sh`
 
+## Remote Host (Raspberry Pi) Issues
+
+### Raspberry Pi not appearing in the host dropdown
+
+The host dropdown is populated from `hosts.json`. If your Pi is missing, it has not been added yet.
+
+**To add it:**
+1. Open the dashboard and go to **Hosts** in the sidebar
+2. Enter a name (e.g. `Raspberry Pi`) and the Docker TCP URL
+3. Click **Add**
+
+URL format:
+- Without TLS: `tcp://192.168.x.x:2375`
+- With TLS: `tcp://192.168.x.x:2376`
+
+---
+
+### Docker on the Raspberry Pi is not listening on TCP
+
+By default Docker only listens on the Unix socket. You must explicitly enable the TCP listener.
+
+**Option 1 — `daemon.json` (recommended):**
+
+Edit (or create) `/etc/docker/daemon.json` on the Pi:
+```json
+{
+  "hosts": ["unix:///var/run/docker.sock", "tcp://0.0.0.0:2375"]
+}
+```
+
+Then reload and restart Docker:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+> If Docker fails to start after this change, check for a conflicting `-H` flag in the systemd unit:
+> ```bash
+> sudo systemctl edit docker
+> # Add under [Service]:
+> # ExecStart=
+> # ExecStart=/usr/bin/dockerd
+> ```
+
+**Option 2 — systemd override only:**
+```bash
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo tee /etc/systemd/system/docker.service.d/override.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+**Verify TCP is listening on the Pi:**
+```bash
+ss -tlnp | grep 2375
+# Or test from the dashboard host:
+curl http://192.168.x.x:2375/version
+```
+
+---
+
+### Host shows "offline" / red badge after adding it
+
+The dashboard tried to connect but got no response. Check:
+
+1. **Is Docker running on the Pi?**
+   ```bash
+   sudo systemctl status docker
+   ```
+
+2. **Is port 2375 open?** Check firewall on the Pi:
+   ```bash
+   sudo ufw status
+   # If UFW is active and blocking:
+   sudo ufw allow 2375/tcp
+   ```
+
+3. **Can the dashboard host reach the Pi?**
+   ```bash
+   # From the machine running the dashboard:
+   curl http://192.168.x.x:2375/version
+   ```
+
+4. **Check the dashboard logs for the actual error:**
+   ```bash
+   docker-compose logs docker-dashboard
+   ```
+
+---
+
+### Security warning — unencrypted TCP
+
+Port 2375 is **unauthenticated and unencrypted**. Anyone on the network with access to that port has full root-level control of Docker on the Pi.
+
+- Only expose port 2375 on a **trusted private network** (home LAN, VPN)
+- For internet-facing or shared networks, configure **Docker with TLS** on port 2376 and use a `tcp://` URL with your client certificate paths
+
+---
+
 ## Getting Help
 
 If you continue to experience issues:

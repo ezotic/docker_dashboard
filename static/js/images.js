@@ -9,7 +9,7 @@ document.querySelectorAll('.inspect-btn').forEach(btn => {
     document.getElementById('inspect-body').textContent = 'Loading…';
     inspectModal.show();
     try {
-      const res = await fetch(`/api/images/${encodeURIComponent(id)}/inspect`);
+      const res = await fetch(apiUrl(`/api/images/${encodeURIComponent(id)}/inspect`));
       const data = await res.json();
       document.getElementById('inspect-body').textContent = JSON.stringify(data, null, 2);
     } catch {
@@ -30,7 +30,7 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
   if (!pendingId) return;
   confirmModal.hide();
   try {
-    const res = await fetch(`/api/images/${encodeURIComponent(pendingId)}`, { method: 'DELETE' });
+    const res = await fetch(apiUrl(`/api/images/${encodeURIComponent(pendingId)}`), { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
       showToast(data.error || 'Remove failed');

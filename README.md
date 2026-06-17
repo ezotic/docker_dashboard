@@ -63,6 +63,9 @@ See [requirements.txt](requirements.txt) for detailed dependency versions.
 ### Quickstart: Docker Compose (Recommended)
 
 ```bash
+# Copy the hosts template and edit it with your remote hosts
+cp hosts.json.template hosts.json
+
 docker-compose up --build
 ```
 
@@ -264,6 +267,8 @@ docker_dashboard/
 ├── Dockerfile                  # Container build configuration
 ├── docker-compose.yml          # Docker Compose configuration
 ├── .env                        # Environment variables
+├── hosts.json.template         # Template for hosts configuration (commit this)
+├── hosts.json                  # Your local hosts config — copy from template (do not commit)
 ├── static/
 │   ├── css/
 │   │   └── app.css            # Application styling
@@ -285,6 +290,38 @@ docker_dashboard/
 ```
 
 ## Configuration
+
+### hosts.json — Remote Host Configuration
+
+`hosts.json` defines the Docker hosts available in the dashboard's host switcher. It is excluded from git (`.gitignore`) so your personal host list stays local.
+
+**First-time setup:**
+```bash
+cp hosts.json.template hosts.json
+```
+
+Then edit `hosts.json` to add your remote hosts. Each entry requires:
+
+| Field | Description |
+|-------|-------------|
+| `id` | Unique slug used in URLs and localStorage (e.g. `raspberry-pi`) |
+| `name` | Display name shown in the dropdown |
+| `url` | Docker connection URL (see below) |
+| `is_local` | Set `true` only for the local Unix socket entry |
+
+**Supported URL formats:**
+
+```
+unix:///var/run/docker.sock   # Local Unix socket (default local host)
+tcp://192.168.1.50:2375       # Remote host, no TLS
+tcp://192.168.1.50:2376       # Remote host, TLS (configure certs separately)
+```
+
+> Remote hosts require Docker's TCP listener to be enabled. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for setup instructions.
+
+You can also add and remove hosts at runtime via the **Hosts** page in the sidebar — changes are written to `hosts.json` automatically.
+
+---
 
 ### Docker Socket Connection
 The application automatically attempts to connect to Docker using the standard Docker Python SDK, which respects:
