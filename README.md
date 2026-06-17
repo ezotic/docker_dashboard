@@ -51,6 +51,7 @@ The Docker Dashboard is a Flask-based web application that connects directly to 
 - CentOS 8, 9
 - Fedora 38+
 - Alpine Linux
+- Arch Linux
 
 ### Python Dependencies
 - Flask 3.0+
