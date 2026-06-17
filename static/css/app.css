@@ -37,6 +37,37 @@
   color: #0dcaf0 !important;
 }
 
+/* Host list items */
+.host-item {
+  border-radius: 6px;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.75rem;
+  color: rgba(255, 255, 255, 0.65) !important;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.host-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff !important;
+}
+
+.host-item.active {
+  background: rgba(13, 202, 240, 0.15);
+  color: #0dcaf0 !important;
+}
+
+@media (max-width: 767.98px) {
+  .host-item {
+    padding: 0.75rem 0.75rem;
+    font-size: 1rem;
+  }
+}
+
 /* Top bar */
 .topbar {
   background-color: #161b22;

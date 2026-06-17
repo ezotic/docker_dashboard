@@ -31,32 +31,38 @@ function _updateNavLinks(hostId) {
     if (!res.ok) return;
     const hosts = await res.json();
 
-    const select = document.getElementById('host-select');
-    if (select) {
-      const active = getActiveHost();
-      select.replaceChildren(...hosts.map(h => {
-        const option = document.createElement('option');
-        option.value = h.id;
-        option.textContent = h.name;
-        option.selected = h.id === active;
-        return option;
-      }));
+    const list = document.getElementById('host-list');
+    if (!list) return;
 
-      select.addEventListener('change', () => {
-        setActiveHost(select.value);
+    const active = getActiveHost();
+
+    list.replaceChildren(...hosts.map(h => {
+      const btn = document.createElement('button');
+      btn.className = 'host-item nav-link text-light w-100 text-start' + (h.id === active ? ' active' : '');
+      btn.dataset.id = h.id;
+
+      const dot = document.createElement('span');
+      dot.className = `status-dot ${h.connected ? 'dot-green' : 'dot-red'} me-2`;
+
+      btn.appendChild(dot);
+      btn.appendChild(document.createTextNode(h.name));
+
+      btn.addEventListener('click', () => {
+        setActiveHost(h.id);
         const url = new URL(window.location);
-        if (select.value === 'local') {
+        if (h.id === 'local') {
           url.searchParams.delete('host');
         } else {
-          url.searchParams.set('host', select.value);
+          url.searchParams.set('host', h.id);
         }
         window.location = url.toString();
       });
-    }
+
+      return btn;
+    }));
 
     // Sync status dot to active host's real connection state
-    const activeId = getActiveHost();
-    const activeHost = hosts.find(h => h.id === activeId);
+    const activeHost = hosts.find(h => h.id === active);
     if (activeHost) {
       const dot = document.getElementById('daemon-dot');
       const label = document.getElementById('daemon-label');
@@ -68,7 +74,7 @@ function _updateNavLinks(hostId) {
           ? `${activeHost.name} connected`
           : `${activeHost.name} offline`;
       }
-      _updateNavLinks(activeId);
+      _updateNavLinks(active);
     }
   } catch (_) {}
 })();

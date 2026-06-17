@@ -68,9 +68,11 @@
 
     <div class="mb-3 mt-3">
       <label class="text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:.06em;">Host</label>
-      <select id="host-select" class="form-select form-select-sm bg-dark text-light border-secondary mt-1">
-        <option value="local">Local</option>
-      </select>
+      <div id="host-list" class="mt-1 d-flex flex-column gap-1">
+        <button class="host-item nav-link text-light w-100 text-start active" data-id="local">
+          <span class="status-dot dot-red me-2"></span>Local
+        </button>
+      </div>
     </div>
 
     <div class="pt-3 border-top border-secondary">
