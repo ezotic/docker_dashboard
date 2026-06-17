@@ -1,5 +1,6 @@
 import docker
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 import os
 import platform
@@ -186,16 +187,49 @@ def get_container_stats(client, container_id):
         mem_usage = mem.get("usage", 0)
         mem_limit = mem.get("limit", 0)
         mem_percent = (mem_usage / mem_limit * 100) if mem_limit > 0 else 0
+        networks = stats.get("networks", {})
+        net_rx = sum(v.get("rx_bytes", 0) for v in networks.values())
+        net_tx = sum(v.get("tx_bytes", 0) for v in networks.values())
+        blkio = stats.get("blkio_stats", {}).get("io_service_bytes_recursive") or []
+        blk_read = sum(e.get("value", 0) for e in blkio if e.get("op") == "Read")
+        blk_write = sum(e.get("value", 0) for e in blkio if e.get("op") == "Write")
         return {
             "cpu_percent": round(cpu_percent, 1),
             "mem_usage": _fmt_size(mem_usage),
             "mem_limit": _fmt_size(mem_limit),
             "mem_percent": round(mem_percent, 1),
+            "net_rx_bytes": net_rx,
+            "net_tx_bytes": net_tx,
+            "blk_read_bytes": blk_read,
+            "blk_write_bytes": blk_write,
         }
     except docker.errors.NotFound:
         return {"error": "Container not found"}, 404
     except Exception:
         return {"cpu_percent": 0, "mem_usage": "—", "mem_limit": "—", "mem_percent": 0}
+
+
+def get_all_container_stats(client) -> list | dict:
+    try:
+        containers = client.containers.list(filters={"status": "running"})
+        if not containers:
+            return []
+        def fetch(c):
+            s = get_container_stats(client, c.id)
+            if isinstance(s, tuple):
+                s = s[0]
+            return {"id": c.id, "short_id": c.short_id, "name": c.name, **s}
+        with ThreadPoolExecutor(max_workers=min(10, len(containers))) as ex:
+            futures = [ex.submit(fetch, c) for c in containers]
+            results = []
+            for f in as_completed(futures):
+                try:
+                    results.append(f.result())
+                except Exception:
+                    pass
+        return sorted(results, key=lambda x: x["name"])
+    except Exception as e:
+        return {"error": str(e)}
 
 
 def stream_container_logs(client, container_id, tail=200):

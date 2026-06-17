@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Graphs — Docker{% endblock %}
+{% block header %}Performance Graphs{% endblock %}
+
+{% block content %}
+{% if not connected %}
+<div class="alert alert-danger">Cannot connect to Docker daemon.</div>
+{% else %}
+<div id="empty-state" class="d-none">
+  <div class="card bg-dark border-secondary text-center py-5">
+    <div class="card-body">
+      <i class="bi bi-graph-up fs-1 text-muted"></i>
+      <p class="text-muted mt-3 mb-0">No running containers to display.</p>
+    </div>
+  </div>
+</div>
+<div id="graphs-grid" class="row g-3"></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  const INITIAL_HOST = "{{ active_host.id | e }}";
+</script>
+<script src="/static/js/graphs.js"></script>
+{% endblock %}

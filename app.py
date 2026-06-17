@@ -182,6 +182,15 @@ def hosts_page():
     return render_template("hosts.html", active_host={"id": "local", "name": "Local"}, connected=True)
 
 
+@app.route("/graphs")
+def graphs():
+    host, client = _resolve_client()
+    if host is None:
+        host = _get_host_by_id("local")
+        client = dc.get_client("local", host["url"])
+    return render_template("graphs.html", connected=client is not None, active_host=host)
+
+
 # ── Host API ──────────────────────────────────────────────────────────────────
 
 @app.route("/api/hosts")
@@ -362,6 +371,16 @@ def api_networks():
     if client is None:
         return jsonify({"error": "Host not found or unreachable"}), 503
     return jsonify(dc.list_networks(client))
+
+
+# ── Graphs API ────────────────────────────────────────────────────────────────
+
+@app.route("/api/graphs/stats")
+def api_graphs_stats():
+    host, client = _resolve_client()
+    if client is None:
+        return jsonify({"error": "Host not found or unreachable"}), 503
+    return jsonify(dc.get_all_container_stats(client))
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
